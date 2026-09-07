@@ -1,0 +1,43 @@
+{
+  "protocol": "topic3c-curated-initial-results-v1",
+  "baseline": "TencentDB-Agent-Memory v2.0.0-beta.1",
+  "clean_repository_verification": {
+    "typescript_test_files": 3,
+    "typescript_tests_passed": 16,
+    "python_tests_passed": 14,
+    "plugin_build_passed": true,
+    "promotion_smoke_passed": true
+  },
+  "long_conversation": {
+    "dataset": "LoCoMo",
+    "independent_dialogs": 5,
+    "evaluation_queries": 923,
+    "adaptive": {
+      "token_f1": 0.21458,
+      "evidence_recall": 0.3638,
+      "mean_input_tokens": 209.5
+    },
+    "delta_vs_top10": {
+      "token_f1": 0.02781,
+      "evidence_recall": 0.03952,
+      "mean_input_tokens": -63.57,
+      "token_savings_rate": 0.2328
+    }
+  },
+  "coding": {
+    "public_reproduction": {
+      "tasks": 5,
+      "valid_reproductions": 5,
+      "official_resolved": 1,
+      "api_tokens": 114384
+    },
+    "public_reproduction_with_repair": {
+      "tasks": 5,
+      "valid_reproductions": 5,
+      "repair_triggered": 1,
+      "official_resolved": 1,
+      "api_tokens": 148010
+    },
+    "conclusion": "Coding feedback and safety mechanisms are implemented; stable memory-caused SWE-bench success-rate improvement is not yet established."
+  }
+}

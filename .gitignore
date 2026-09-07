@@ -103,6 +103,14 @@ scripts/pre-commit-check.sh
 # Backup files
 *.bak
 
+# Local model credentials (never commit)
+dsapicode.txt
+
+# Downloaded public benchmark data (recreated by the pinned downloader)
+MemoryCore/scripts/topic3-c/data/swebench-verified/
+pytest-cache-files-*/
+MemoryCore/pytest-cache-files-*/
+
 # self-implement-wiki e2e 产物（人工查看用，不入库）
 docs/knowledge/self-implement-wiki/_e2e-output/
 
