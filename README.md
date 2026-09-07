@@ -90,11 +90,16 @@ docs/topic3c/
   IMPLEMENTATION.md
   EXPERIMENT_HISTORY.md
   RESULTS.md
+  report/render_report.py
+output/pdf/
+  topic3c-adaptive-memory-initial-report-cn.pdf
 results/
   initial-results.json
 ```
 
 其余目录来自上游 `v2.0.0-beta.1`，便于审查本方案相对基线的增量。
+
+精简中期报告见 [自适应记忆编程优化：实现代码与初步测试结果](output/pdf/topic3c-adaptive-memory-initial-report-cn.pdf)。
 
 ## 快速验证
 
