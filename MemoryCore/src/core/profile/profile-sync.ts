@@ -10,7 +10,7 @@ import type { Logger } from "../types.js";
 
 export const DEFAULT_PROFILE_SCOPE = "global";
 
-export type ProfileIsolation = { teamId?: string; userId?: string; agentId?: string; sessionId?: string };
+export type ProfileIsolation = { teamId?: string; userId?: string; agentId?: string; sessionId?: string; projectId?: string };
 
 export interface ProfileScopeOptions {
   scope?: string;

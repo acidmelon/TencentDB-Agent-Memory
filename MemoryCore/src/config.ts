@@ -97,6 +97,29 @@ export interface RecallConfig {
   strategy: "embedding" | "keyword" | "hybrid";
   /** Overall recall timeout in milliseconds (default: 5000). When exceeded, recall is skipped with a warning. */
   timeoutMs: number;
+  /** Optional persistent online policy for selecting a bounded recall K. */
+  adaptivePolicy?: {
+    enabled?: boolean;
+    shadow?: boolean;
+    /** Learner implementation; mean is the backward-compatible default. */
+    learner?: "mean" | "linucb";
+    /** LinUCB exploration coefficient when learner is linucb. */
+    ucbAlpha?: number;
+    /** Independent retrieval-recall tolerance for candidate actions. */
+    recallTolerance?: number;
+    /** Require paired recall feedback before selecting candidates. */
+    requireRecallFeedback?: boolean;
+    minObservations?: number;
+    tokenSavingsWeight?: number;
+    qualityTolerance?: number;
+    decisionMargin?: number;
+    minActionObservations?: number;
+    priorObservations?: number;
+    requireTokenSavings?: boolean;
+    maxK?: number;
+    stateTtlDays?: number;
+    maxScopes?: number;
+  };
 }
 
 /** Embedding service configuration for vector search. */
@@ -576,6 +599,24 @@ export function parseConfig(raw: Record<string, unknown> | undefined): MemoryTda
       scoreThreshold: num(recallGroup, "scoreThreshold") ?? 0.3,
       strategy: validateStrategy(str(recallGroup, "strategy")) ?? "hybrid",
       timeoutMs: num(recallGroup, "timeoutMs") ?? 5000,
+      adaptivePolicy: {
+        enabled: bool(recallGroup, "adaptiveEnabled") ?? false,
+        shadow: bool(recallGroup, "adaptiveShadow") ?? true,
+        learner: str(recallGroup, "adaptiveLearner") === "linucb" ? "linucb" : "mean",
+        ucbAlpha: num(recallGroup, "adaptiveUcbAlpha") ?? 0.35,
+        recallTolerance: num(recallGroup, "adaptiveRecallTolerance") ?? 0,
+        requireRecallFeedback: bool(recallGroup, "adaptiveRequireRecallFeedback") ?? false,
+        minObservations: num(recallGroup, "adaptiveMinObservations") ?? 20,
+        tokenSavingsWeight: num(recallGroup, "adaptiveTokenSavingsWeight") ?? 0.25,
+        qualityTolerance: num(recallGroup, "adaptiveQualityTolerance") ?? 0,
+        decisionMargin: num(recallGroup, "adaptiveDecisionMargin") ?? 0.01,
+        minActionObservations: num(recallGroup, "adaptiveMinActionObservations") ?? 8,
+        priorObservations: num(recallGroup, "adaptivePriorObservations") ?? 5,
+        requireTokenSavings: bool(recallGroup, "adaptiveRequireTokenSavings") ?? true,
+        maxK: num(recallGroup, "adaptiveMaxK") ?? 10,
+        stateTtlDays: num(recallGroup, "adaptiveStateTtlDays") ?? 30,
+        maxScopes: num(recallGroup, "adaptiveMaxScopes") ?? 256,
+      },
     },
     embedding: {
       enabled: embeddingEnabled,

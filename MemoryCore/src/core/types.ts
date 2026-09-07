@@ -291,6 +291,15 @@ export interface RecallResult {
   recalledL3Persona?: string | null;
   /** Search strategy used. */
   recallStrategy?: string;
+  /** Online adaptive recall action metadata, when enabled. */
+  adaptiveDecision?: {
+    action: string;
+    effectiveK: number;
+    scope: string;
+    policyVersion: number;
+    shadow: boolean;
+    observationCount: number;
+  };
   /**
    * H-15: structured failure signal. When recall fails (config error / dependency timeout /
    * storage error / etc), this is populated with a RecallError; success leaves it undefined.

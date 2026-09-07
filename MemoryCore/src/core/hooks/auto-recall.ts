@@ -28,6 +28,7 @@ import {
   type ProfileIsolation,
 } from "../profile/profile-sync.js";
 import type { Logger } from "../types.js";
+import { adaptiveScope, getAdaptiveRecallPolicy, type AdaptiveDecision } from "./adaptive-policy.js";
 
 const TAG = "[memory-tdai] [recall]";
 const RECALL_TRUNCATION_SUFFIX = "…（已截断；可用 tdai_memory_search 或 tdai_conversation_search 查看详情）";
@@ -73,6 +74,8 @@ export interface RecallResult {
   recalledL3Persona?: string | null;
   /** Effective search strategy used */
   recallStrategy?: string;
+  /** Decision metadata for delayed feedback and observability. */
+  adaptiveDecision?: AdaptiveDecision;
 
   // ── H-15: structured failure signal ──
   /**
@@ -178,13 +181,64 @@ async function performAutoRecallCore(params: {
   let memoryLines: string[] = [];
   let effectiveStrategy = "skipped";
   let recalledL1Memories: RecalledMemory[] = [];
+  let adaptiveDecision: AdaptiveDecision | undefined;
   let searchTiming: SearchTiming = { ftsMs: 0, embeddingMs: 0, ftsHits: 0, embeddingHits: 0 };
   if (!userText || userText.length === 0) {
     logger?.debug?.(`${TAG} User text empty/undefined, skipping memory search (persona/scene still injected)`);
   } else {
     effectiveStrategy = cfg.recall.strategy ?? "hybrid";
-    const searchResult = await searchMemories(userText, pluginDataDir, cfg, logger, effectiveStrategy as "keyword" | "embedding" | "hybrid", vectorStore, embeddingService);
+    // The policy is a sidecar: it can only change the bounded maxResults
+    // parameter. Any read/parse failure leaves the original static config in use.
+    try {
+      const policy = getAdaptiveRecallPolicy(pluginDataDir, cfg.recall.adaptivePolicy);
+      adaptiveDecision = await policy.decide(
+        adaptiveScope(profileIsolation.teamId, profileIsolation.agentId),
+        {
+          queryLength: userText.length,
+          hasTemporalCue: /(when|before|after|date|year|recent|latest|之前|之后|时间|最近)/i.test(userText),
+          hasCodeCue: /(?:file|path|function|method|class|module|import|package|version|error|exception|stack|test|compile|build|文件|函数|报错|测试)/i.test(userText),
+          fileCount: (userText.match(/(?:[A-Za-z]:[\\/])?[^\s`]+\.(?:ts|tsx|js|jsx|py|java|go|rs|cpp|h|json|yaml|yml)/gi) ?? []).length,
+          functionCount: (userText.match(/\b(?:function|method|class|fn|def)\s+[A-Za-z_$][\w$]*/gi) ?? []).length,
+          dependencyChange: /(?:package(?:\.json|-lock)|requirements|pyproject|cargo\.toml|go\.mod|依赖|版本升级|upgrade|dependency)/i.test(userText),
+          stackTracePresent: /(?:stack trace|traceback|exception|at [A-Za-z_$][\w$]*\.|报错堆栈|调用栈)/i.test(userText),
+          staleEvidenceRisk: /(?:deprecated|obsolete|stale|outdated|旧版本|过时|已废弃|迁移后)/i.test(userText) ? 1 : 0,
+        },
+      );
+      logger?.debug?.(`${TAG} adaptive decision: action=${adaptiveDecision.action} k=${adaptiveDecision.effectiveK} shadow=${adaptiveDecision.shadow} observations=${adaptiveDecision.observationCount} scope=${adaptiveDecision.scope}`);
+    } catch (err) {
+      logger?.warn?.(`${TAG} adaptive policy unavailable; using configured Top-K: ${err instanceof Error ? err.message : String(err)}`);
+      adaptiveDecision = undefined;
+    }
+    const searchCfg = adaptiveDecision
+      ? {
+          ...cfg,
+          // Adaptive mode uses Top-10 as its explicit counterfactual anchor;
+          // before warmup/shadow it must therefore not inherit a smaller K.
+          recall: { ...cfg.recall, maxResults: adaptiveDecision.shadow ? 10 : adaptiveDecision.effectiveK },
+        }
+      : cfg;
+    const searchResult = await searchMemories(userText, pluginDataDir, searchCfg, logger, effectiveStrategy as "keyword" | "embedding" | "hybrid", vectorStore, embeddingService);
     memoryLines = searchResult.lines;
+    // Optional low-cost auxiliary organization action selected by the policy.
+    // It reuses the existing FTS5 L0 API and never replaces the L1 anchor.
+    if (adaptiveDecision?.action === "top5-l0" && !adaptiveDecision.shadow && vectorStore?.isFtsAvailable()) {
+      try {
+        const l0Query = buildFtsQuery(sanitizeText(userText));
+        if (l0Query) {
+          const l0 = await vectorStore.searchL0Fts(l0Query, 2, {
+            teamId: profileIsolation.teamId,
+            userId: profileIsolation.userId,
+            agentId: profileIsolation.agentId,
+          });
+          const l0Lines = l0.map((row) => `- [L0] ${row.message_text}`);
+          memoryLines = [...memoryLines, ...l0Lines];
+          logger?.debug?.(`${TAG} adaptive L0 BM25 neighbors: ${l0Lines.length}`);
+        }
+      } catch (err) {
+        // L0 is auxiliary; a failure leaves the selected L1 results intact.
+        logger?.warn?.(`${TAG} adaptive L0 neighbor lookup failed; retaining L1 results: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
     searchTiming = searchResult.timing;
     memoryLines = applyRecallBudget(memoryLines, cfg.recall, logger);
 
@@ -309,6 +363,7 @@ async function performAutoRecallCore(params: {
     recalledL1Memories,
     recalledL3Persona: personaContent ?? null,
     recallStrategy: effectiveStrategy,
+    adaptiveDecision,
   };
 }
 
