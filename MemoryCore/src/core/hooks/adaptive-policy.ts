@@ -16,9 +16,9 @@ export interface AdaptiveRecallConfig {
   minObservations: number;
   /** Reward = normalized quality delta + tokenSavingsWeight * relative token savings. */
   tokenSavingsWeight: number;
-  /** Minimum predicted quality delta against Top-10. */
+  /** Lowest acceptable quality delta against Top-10 (zero or an allowed negative loss). */
   qualityTolerance: number;
-  /** Optional independent recall lower bound against Top-10. */
+  /** Lowest acceptable recall delta against Top-10 (zero or an allowed negative loss). */
   recallTolerance: number;
   /** Require paired recall feedback before a non-baseline action can be selected. */
   requireRecallFeedback: boolean;
@@ -160,6 +160,8 @@ function safeConfig(input?: Partial<AdaptiveRecallConfig>): AdaptiveRecallConfig
     ucbAlpha: Math.max(0, Number.isFinite(Number(c.ucbAlpha)) ? Number(c.ucbAlpha) : DEFAULT_CONFIG.ucbAlpha),
     minObservations: Math.max(1, Math.floor(Number(c.minObservations) || DEFAULT_CONFIG.minObservations)),
     tokenSavingsWeight: Math.max(0, Number(c.tokenSavingsWeight) || 0),
+    // These fields are lower bounds on deltas, not positive gain targets. A
+    // positive switching threshold is represented separately by decisionMargin.
     qualityTolerance: Math.min(0, Number.isFinite(Number(c.qualityTolerance)) ? Number(c.qualityTolerance) : 0),
     recallTolerance: Math.min(0, Number.isFinite(Number(c.recallTolerance)) ? Number(c.recallTolerance) : 0),
     requireRecallFeedback: c.requireRecallFeedback === true,

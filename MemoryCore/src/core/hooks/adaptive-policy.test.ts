@@ -2,7 +2,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { AdaptiveRecallPolicy } from "./adaptive-policy.js";
+import { AdaptiveRecallPolicy, adaptiveScope } from "./adaptive-policy.js";
 
 const dirs: string[] = [];
 afterEach(async () => {
@@ -10,6 +10,12 @@ afterEach(async () => {
 });
 
 describe("AdaptiveRecallPolicy", () => {
+  it("isolates learned state by project when the caller provides a project id", () => {
+    expect(adaptiveScope("team", "agent", "project-a")).toBe("team/agent/project-a");
+    expect(adaptiveScope("team", "agent", "project-b")).toBe("team/agent/project-b");
+    expect(adaptiveScope("team", "agent")).toBe("team/agent/default-project");
+  });
+
   it("keeps the safe Top-10 prior during warmup", async () => {
     const dir = await mkdtemp(path.join(os.tmpdir(), "tdai-adaptive-")); dirs.push(dir);
     const policy = new AdaptiveRecallPolicy(dir, { enabled: true, shadow: false, minObservations: 3 });

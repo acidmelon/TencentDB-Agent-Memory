@@ -192,7 +192,7 @@ async function performAutoRecallCore(params: {
     try {
       const policy = getAdaptiveRecallPolicy(pluginDataDir, cfg.recall.adaptivePolicy);
       adaptiveDecision = await policy.decide(
-        adaptiveScope(profileIsolation.teamId, profileIsolation.agentId),
+        adaptiveScope(profileIsolation.teamId, profileIsolation.agentId, profileIsolation.projectId),
         {
           queryLength: userText.length,
           hasTemporalCue: /(when|before|after|date|year|recent|latest|之前|之后|时间|最近)/i.test(userText),

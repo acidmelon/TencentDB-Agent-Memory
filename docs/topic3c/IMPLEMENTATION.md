@@ -10,7 +10,7 @@
 
 `MemoryCore/src/core/hooks/adaptive-policy.ts` 提供：
 
-- team/agent/project 作用域隔离；
+- team/agent/project 作用域隔离；未提供 `projectId` 的调用方落到显式的 `default-project`；
 - JSON 状态原子写入和损坏/过期回退；
 - 有限动作的经验均值学习；
 - 无额外 LLM selector 成本的 LinUCB；
@@ -31,11 +31,11 @@
 
 ### PromotionGate
 
-`promotion-gate.ts` 将学习与启用分离。只有样本数、编程反馈覆盖率、质量下界、token 节省下界和 fallback 指标同时通过，候选策略才可晋升；任何硬回归可立即降级。
+`promotion-gate.ts` 将学习与启用分离。只有样本数、编程反馈覆盖率、质量下界、token 节省下界和 fallback 指标同时通过，候选策略才可晋升；任何硬回归可立即降级。当前该组件用于实验适配器和回放验证，并未默认接入 `auto-recall.ts` 的线上决策路径。
 
 ### AutoRecall Integration
 
-`auto-recall.ts` 在调用现有 `searchMemories` 前取得策略决策，只覆盖 `maxResults`。`top5-l0` 复用已有 L0 FTS5 API，失败时保留 L1 结果。功能默认关闭。
+`auto-recall.ts` 在调用现有 `searchMemories` 前取得策略决策，只覆盖 `maxResults`。`top5-l0` 复用已有 L0 FTS5 API，失败时保留 L1 结果。功能默认关闭；核心 API 会使用上层传入的 team/agent/project 标识，现有未传项目标识的入口使用默认项目作用域。
 
 ## SWE 实验求解器
 

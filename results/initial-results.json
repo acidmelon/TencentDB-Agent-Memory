@@ -3,7 +3,7 @@
   "baseline": "TencentDB-Agent-Memory v2.0.0-beta.1",
   "clean_repository_verification": {
     "typescript_test_files": 3,
-    "typescript_tests_passed": 16,
+    "typescript_tests_passed": 17,
     "python_tests_passed": 14,
     "plugin_build_passed": true,
     "promotion_smoke_passed": true

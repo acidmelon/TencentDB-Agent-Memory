@@ -22,7 +22,7 @@ paired bootstrap 95% CI：
 
 本次从 `v2.0.0-beta.1` 重建的干净仓库验证结果：
 
-- Topic 3C TypeScript：3 个测试文件，16 个测试全部通过；
+- Topic 3C TypeScript：3 个测试文件，17 个测试全部通过；
 - SWE solver Python：14 个测试全部通过；
 - MemoryCore plugin build：通过；
 - promotion smoke：第 24 条正反馈晋升，随后 hard regression 立即降级。

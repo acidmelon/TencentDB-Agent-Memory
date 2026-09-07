@@ -23,7 +23,7 @@ MemoryCore Top-10 基线
 编程反馈：pass@1 / compile / tests / regression / token
         |
         v
-项目级 promotion gate
+按项目作用域运行的 promotion gate（实验适配/回放层）
         +-- onboarding / shadow
         +-- eligible / promoted
         +-- hard failure -> demoted -> Top-10
@@ -41,8 +41,8 @@ MemoryCore Top-10 基线
 
 - `AdaptiveRecallPolicy`：持久化作用域状态、均值策略、LinUCB、有限动作和成本约束。
 - `coding-feedback`：把编译、测试、回归、pass@1 和 token 转为配对反馈。
-- `AdaptivePromotionGate`：基于质量/成本置信下界、编程覆盖率和硬失败进行晋升或降级。
-- `auto-recall` 接入：按 team/agent/project 作用域决策，可选补充 L0 FTS5 证据。
+- `AdaptivePromotionGate`：基于质量/成本置信下界、编程覆盖率和硬失败进行晋升或降级；当前由实验适配/回放层调用，尚未默认串入 `auto-recall`。
+- `auto-recall` 接入：按 team/agent/project 作用域决策，可选补充 L0 FTS5 证据。调用方未提供 `projectId` 时使用 `default-project`。
 - SWE 实验闭环：linked 源码定位、test-first reproduction、窄回归、错误分类和回滚。
 
 ## 初步结果
@@ -69,7 +69,7 @@ query-level 与 dialog-cluster bootstrap 区间均不跨 0；但只有 5 个独�
 | Matplotlib 13989 | `publicly_validated=true` | linked 定位与窄回归恢复了有效补丁 |
 | Astropy 14096 adaptive | 记忆成功延迟注入，无有效补丁 | 触发机制有效，成功率收益未证实 |
 
-准确结论：当前实现已经改善代码定位、公开验证、回滚和失败恢复条件；尚无足够独立样本证明“历史记忆稳定提高编程成功率”。完整口径见 [初步测试结果](docs/topic3c/RESULTS.md)。
+准确结论：当前实现已经改善代码定位、公开验证、回滚和失败恢复条件；尚无足够独立样本证明“历史记忆稳定提高编程成功率”。完整口径见 [初步测试结果](docs/topic3c/RESULTS.md)，方案筛选过程见 [实验探索与方案演化](docs/topic3c/EXPERIMENT_HISTORY.md)。
 
 ## 目录
 
@@ -88,6 +88,7 @@ MemoryCore/
     test_swe_agent_v2.py
 docs/topic3c/
   IMPLEMENTATION.md
+  EXPERIMENT_HISTORY.md
   RESULTS.md
 results/
   initial-results.json
