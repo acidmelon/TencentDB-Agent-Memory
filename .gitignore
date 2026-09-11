@@ -82,6 +82,11 @@ docs/*.png
 docs/*.pptx
 docs/*.mmd
 
+# Local delivery bundles and report-rendering QA output
+/submission/
+/tmp/
+/*.pdf
+
 # Log files
 *.log
 scene_blocks/

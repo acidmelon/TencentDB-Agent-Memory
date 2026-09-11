@@ -1,0 +1,380 @@
+{
+  "protocol": "topic3-c-confidence-lower-bound-knn24-v1",
+  "no_new_llm_calls": true,
+  "split": {
+    "dev_dialogs": [
+      "locomo-8",
+      "locomo-9",
+      "locomo-0"
+    ],
+    "validation_dialogs": [
+      "locomo-1",
+      "locomo-7"
+    ],
+    "caveat": "All dialogs were observed during earlier method development; this is a frozen split replay, not a new independent benchmark."
+  },
+  "fixed_parameters": {
+    "neighbors": 32,
+    "onboarding_queries_per_dialog": 24,
+    "min_savings_rate": 0.1,
+    "f1_tolerance": 0.005,
+    "recall_tolerance": 0.005,
+    "confidence_multipliers": [
+      0,
+      0.5,
+      1
+    ]
+  },
+  "selection_rule": "On dev only: non-negative mean F1 and recall deltas, at least 10% token saving; then maximize F1, recall, and saving in that order.",
+  "selected_confidence_multiplier": 0,
+  "dev": [
+    {
+      "confidence_multiplier": 0,
+      "summary": {
+        "count": 527,
+        "token_f1": 0.17936341459703226,
+        "token_recall": 0.31663233865188173,
+        "input_tokens": 217.0132827324478,
+        "vs_top10": {
+          "token_f1": 0.026495568872822825,
+          "token_recall": 0.04736689317983637,
+          "input_tokens": -50.05882352941177
+        },
+        "token_savings_rate": 0.1874356114162291,
+        "action_counts": {
+          "top10": 118,
+          "top5": 40,
+          "k5-l0-1": 194,
+          "k5-l0-2": 175
+        },
+        "reason_counts": {
+          "warmup": 0,
+          "explore": 21,
+          "learned": 370,
+          "baseline": 118,
+          "budget": 18
+        },
+        "query_paired_bootstrap_ci95": {
+          "token_f1": [
+            0.011356285889243534,
+            0.042044117107336104
+          ],
+          "token_recall": [
+            0.02253867397181089,
+            0.07307469791989916
+          ],
+          "input_tokens": [
+            -55.49525616698292,
+            -44.73624288425047
+          ]
+        },
+        "dialog_cluster_bootstrap_ci95": {
+          "cluster_count": 3,
+          "token_f1": [
+            0.013591684006487154,
+            0.04982768631440596
+          ],
+          "token_recall": [
+            0.009613787375415288,
+            0.10472629327634488
+          ],
+          "input_tokens": [
+            -62.182857142857145,
+            -40.727777777777774
+          ]
+        }
+      }
+    },
+    {
+      "confidence_multiplier": 0.5,
+      "summary": {
+        "count": 527,
+        "token_f1": 0.17758760497629464,
+        "token_recall": 0.31135045329908856,
+        "input_tokens": 220.2428842504744,
+        "vs_top10": {
+          "token_f1": 0.024719759252085305,
+          "token_recall": 0.0420850078270432,
+          "input_tokens": -46.8292220113852
+        },
+        "token_savings_rate": 0.17534299132485942,
+        "action_counts": {
+          "top10": 159,
+          "top5": 40,
+          "k5-l0-1": 151,
+          "k5-l0-2": 177
+        },
+        "reason_counts": {
+          "warmup": 0,
+          "explore": 21,
+          "learned": 329,
+          "baseline": 159,
+          "budget": 18
+        },
+        "query_paired_bootstrap_ci95": {
+          "token_f1": [
+            0.010281880523580877,
+            0.039924464943070496
+          ],
+          "token_recall": [
+            0.018227789251340987,
+            0.06683452121632487
+          ],
+          "input_tokens": [
+            -51.9392789373814,
+            -41.774193548387096
+          ]
+        },
+        "dialog_cluster_bootstrap_ci95": {
+          "cluster_count": 3,
+          "token_f1": [
+            0.010661801518912573,
+            0.04769860805340942
+          ],
+          "token_recall": [
+            0.005265067619718786,
+            0.08800509212531918
+          ],
+          "input_tokens": [
+            -58.48,
+            -38.45
+          ]
+        }
+      }
+    },
+    {
+      "confidence_multiplier": 1,
+      "summary": {
+        "count": 527,
+        "token_f1": 0.17180247731907264,
+        "token_recall": 0.2943875506655587,
+        "input_tokens": 227.04933586337762,
+        "vs_top10": {
+          "token_f1": 0.018934631594863274,
+          "token_recall": 0.025122105193513357,
+          "input_tokens": -40.022770398481974
+        },
+        "token_savings_rate": 0.14985754580914679,
+        "action_counts": {
+          "top10": 216,
+          "top5": 41,
+          "k5-l0-1": 105,
+          "k5-l0-2": 165
+        },
+        "reason_counts": {
+          "warmup": 0,
+          "explore": 21,
+          "learned": 260,
+          "baseline": 216,
+          "budget": 30
+        },
+        "query_paired_bootstrap_ci95": {
+          "token_f1": [
+            0.005055913902233302,
+            0.03330135467237503
+          ],
+          "token_recall": [
+            0.003630777824326209,
+            0.04686068046376117
+          ],
+          "input_tokens": [
+            -44.92409867172675,
+            -35.22960151802656
+          ]
+        },
+        "dialog_cluster_bootstrap_ci95": {
+          "cluster_count": 3,
+          "token_f1": [
+            0.010054147972344397,
+            0.034811688901511886
+          ],
+          "token_recall": [
+            0.00947043283217899,
+            0.037233075566408896
+          ],
+          "input_tokens": [
+            -53.37714285714286,
+            -28.06111111111111
+          ]
+        }
+      }
+    }
+  ],
+  "validation": [
+    {
+      "confidence_multiplier": 0,
+      "frozen_selected": true,
+      "summary": {
+        "count": 296,
+        "token_f1": 0.21564394613971613,
+        "token_recall": 0.350092217279717,
+        "input_tokens": 210.8310810810811,
+        "vs_top10": {
+          "token_f1": -0.005195654493831478,
+          "token_recall": -0.03026730214230214,
+          "input_tokens": -50.59121621621622
+        },
+        "token_savings_rate": 0.1935229578320259,
+        "action_counts": {
+          "top10": 58,
+          "top5": 18,
+          "k5-l0-1": 129,
+          "k5-l0-2": 91
+        },
+        "reason_counts": {
+          "warmup": 0,
+          "explore": 11,
+          "learned": 225,
+          "baseline": 58,
+          "budget": 2
+        },
+        "query_paired_bootstrap_ci95": {
+          "token_f1": [
+            -0.03151354239117475,
+            0.020890469908219286
+          ],
+          "token_recall": [
+            -0.06560182497682497,
+            0.004931836181836183
+          ],
+          "input_tokens": [
+            -56.63175675675676,
+            -44.61824324324324
+          ]
+        },
+        "dialog_cluster_bootstrap_ci95": {
+          "cluster_count": 2,
+          "token_f1": [
+            -0.014331356408348915,
+            0.01905343083482588
+          ],
+          "token_recall": [
+            -0.04074748249166854,
+            -0.0024495394865765253
+          ],
+          "input_tokens": [
+            -52.87906976744186,
+            -44.51851851851852
+          ]
+        }
+      }
+    },
+    {
+      "confidence_multiplier": 0.5,
+      "frozen_selected": false,
+      "summary": {
+        "count": 296,
+        "token_f1": 0.22513048564329424,
+        "token_recall": 0.3574308058683057,
+        "input_tokens": 218.1891891891892,
+        "vs_top10": {
+          "token_f1": 0.004290885009746664,
+          "token_recall": -0.022928713553713547,
+          "input_tokens": -43.233108108108105
+        },
+        "token_savings_rate": 0.16537651361445316,
+        "action_counts": {
+          "top10": 88,
+          "top5": 16,
+          "k5-l0-1": 113,
+          "k5-l0-2": 79
+        },
+        "reason_counts": {
+          "warmup": 0,
+          "explore": 11,
+          "learned": 195,
+          "baseline": 88,
+          "budget": 2
+        },
+        "query_paired_bootstrap_ci95": {
+          "token_f1": [
+            -0.020471285223464548,
+            0.02943457606043542
+          ],
+          "token_recall": [
+            -0.05611469986469986,
+            0.009854822354822363
+          ],
+          "input_tokens": [
+            -48.979729729729726,
+            -37.5
+          ]
+        },
+        "dialog_cluster_bootstrap_ci95": {
+          "cluster_count": 2,
+          "token_f1": [
+            -0.0038507128247972445,
+            0.025901299015017542
+          ],
+          "token_recall": [
+            -0.029248774481332618,
+            -0.006153243190280228
+          ],
+          "input_tokens": [
+            -45.38604651162791,
+            -37.51851851851852
+          ]
+        }
+      }
+    },
+    {
+      "confidence_multiplier": 1,
+      "frozen_selected": false,
+      "summary": {
+        "count": 296,
+        "token_f1": 0.2160284378086288,
+        "token_recall": 0.3568689615564615,
+        "input_tokens": 228.11824324324326,
+        "vs_top10": {
+          "token_f1": -0.004811162824918636,
+          "token_recall": -0.023490557865557867,
+          "input_tokens": -33.304054054054056
+        },
+        "token_savings_rate": 0.12739561391039134,
+        "action_counts": {
+          "top10": 142,
+          "top5": 16,
+          "k5-l0-1": 68,
+          "k5-l0-2": 70
+        },
+        "reason_counts": {
+          "warmup": 0,
+          "explore": 11,
+          "learned": 138,
+          "baseline": 142,
+          "budget": 5
+        },
+        "query_paired_bootstrap_ci95": {
+          "token_f1": [
+            -0.02732312080520973,
+            0.017153347324663004
+          ],
+          "token_recall": [
+            -0.0514077607827608,
+            0.0037054912054911983
+          ],
+          "input_tokens": [
+            -38.9527027027027,
+            -27.868243243243242
+          ]
+        },
+        "dialog_cluster_bootstrap_ci95": {
+          "cluster_count": 2,
+          "token_f1": [
+            -0.015953614017425517,
+            0.024764479229266285
+          ],
+          "token_recall": [
+            -0.028937019053298117,
+            -0.009033901626494216
+          ],
+          "input_tokens": [
+            -34.7037037037037,
+            -32.776744186046514
+          ]
+        }
+      }
+    }
+  ],
+  "conclusion_rule": "Promote the confidence-gated variant only if its frozen validation improves safety or quality without losing the original KNN24 quality/cost advantage; otherwise retain multiplier 0 (original KNN24)."
+}

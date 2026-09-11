@@ -1,27 +1,46 @@
 {
-  "protocol": "topic3c-curated-initial-results-v1",
+  "protocol": "topic3c-curated-final-results-v2",
   "baseline": "TencentDB-Agent-Memory v2.0.0-beta.1",
   "clean_repository_verification": {
     "typescript_test_files": 3,
     "typescript_tests_passed": 17,
     "python_tests_passed": 14,
     "plugin_build_passed": true,
-    "promotion_smoke_passed": true
+    "promotion_smoke_passed": true,
+    "final_replay_passed": true
   },
   "long_conversation": {
     "dataset": "LoCoMo",
-    "independent_dialogs": 5,
-    "evaluation_queries": 923,
-    "adaptive": {
-      "token_f1": 0.21458,
-      "evidence_recall": 0.3638,
-      "mean_input_tokens": 209.5
-    },
-    "delta_vs_top10": {
+    "observed_dialogs": 5,
+    "historical_evaluation_queries": 923,
+    "historical_replay_delta_vs_top10": {
       "token_f1": 0.02781,
       "evidence_recall": 0.03952,
       "mean_input_tokens": -63.57,
       "token_savings_rate": 0.2328
+    },
+    "frozen_split_validation": {
+      "dev_dialogs": 3,
+      "validation_dialogs": 2,
+      "validation_queries": 296,
+      "selected_confidence_multiplier": 0,
+      "delta_vs_top10": {
+        "token_f1": -0.005195654493831478,
+        "evidence_recall": -0.03026730214230214,
+        "mean_input_tokens": -50.59121621621622
+      },
+      "promoted": false
+    },
+    "longmemeval_ridge_gate": {
+      "queries": 30,
+      "top5_queries": 4,
+      "delta_vs_top10": {
+        "token_f1": 0,
+        "evidence_recall": 0,
+        "mean_input_tokens": -22.9
+      },
+      "token_ci95": [-46.37, -3.53],
+      "cross_dataset_transfer": false
     }
   },
   "coding": {
@@ -38,6 +57,9 @@
       "official_resolved": 1,
       "api_tokens": 148010
     },
-    "conclusion": "Coding feedback and safety mechanisms are implemented; stable memory-caused SWE-bench success-rate improvement is not yet established."
-  }
+    "real_contract_feedback_rows": 2,
+    "required_feedback_rows": 24,
+    "conclusion": "Coding feedback and safety mechanisms are implemented; stable memory-caused SWE-bench success-rate improvement is not established."
+  },
+  "claim_boundary": "The five LoCoMo dialogs were observed during method development. Historical replay is mechanism evidence, not a new independent benchmark."
 }

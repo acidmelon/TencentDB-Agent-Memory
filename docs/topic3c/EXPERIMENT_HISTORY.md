@@ -16,10 +16,12 @@
 | 即时记忆 | 首次失败后立即注入经验 | 容易把偶然错误或错误修复固化 | 改为编译/测试完成后的延迟配对反馈 |
 | 延迟/自适应记忆 | 根据 compile、tests、regression、pass@1 和 token 更新 | 反馈能稳定写入并触发动作；Astropy 个案未转化为有效补丁 | 学习与启用分离，并加入硬失败降级 |
 | Reproduction + repair | 先复现再修复、运行窄回归 | 5 题上由 114,384 增至 148,010 token，解决数仍为 1 | 保留复现与验证纪律，不把更多推理轮次视为收益 |
+| 置信下界 KNN | 用加权方差和有效邻居数约束 F1/recall | 开发集仍选择原 KNN24；296 题冻结验证 recall 下降 | 不晋升，停止在已观察数据上继续调参 |
+| MLP / 离线 Q | 在统一 30 题 LongMemEval 动作表上比较 | MLP 过拟合；Q 的 F1 点增益伴随 recall 损失 | 小样本下保留简单门控，不增加模型复杂度 |
 
 ## 当前选择
 
-当前最合理的工程候选是：`Top-10 安全锚点 + 有界自适应动作 + 同任务配对延迟反馈 + 按项目作用域的晋升与回退`。编程侧再叠加 linked retrieval、test-first reproduction、窄回归和失败回滚。
+当前最合理的工程候选是：`Top-10 安全锚点 + 有界自适应动作 + 同任务配对延迟反馈 + 按项目作用域的晋升与回退`。KNN24 是质量/成本研究主线而不是默认策略；编程侧再叠加 linked retrieval、函数/定义卡片、test-first reproduction、窄回归和失败回滚。
 
 选择依据不是单次成功率最高，而是它同时满足：
 
@@ -31,6 +33,6 @@
 
 ## 尚未证明的部分
 
-当前结果不能证明该方案在 SWE-bench 上稳定提高最终解决率。5 题样本中 reproduction + repair 没有增加 resolved 数；Matplotlib 个案支持 linked retrieval 的价值，Astropy 个案则说明“成功触发记忆”不等于“生成有效补丁”。因此 promotion gate 目前保留在实验适配/回放层，不能表述为已在线上默认启用。
+当前结果不能证明该方案在 SWE-bench 上稳定提高最终解决率。5 题样本中 reproduction + repair 没有增加 resolved 数；Matplotlib 个案支持 linked retrieval 的价值，Astropy 个案则说明“成功触发记忆”不等于“生成有效补丁”。长对话最终冻结切分也没有守住 recall。因此 promotion gate 目前保留在实验适配/回放层，不能表述为已在线上默认启用。
 
 下一阶段应在更多独立任务上冻结模型、预算和基线，比较无记忆、Top-10、候选策略三组，并报告 resolved、公开测试、回归、token 和失败类型。只有跨项目重复出现收益后，才应将 promotion gate 接入默认自动召回链路。

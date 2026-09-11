@@ -204,7 +204,7 @@ def build_story(st):
         Spacer(1, 10 * mm),
         p("自适应记忆在编程任务中的优化", st["title"]),
         p("实现代码与初步测试结果 · 题目三 C · 2026-09-08", st["subtitle"]),
-        callout("核心结论：当前方案已在长对话留出集上同时改善质量、召回与 token 成本；编程侧已完成 linked retrieval、延迟反馈、影子学习、晋升/回退和可执行 SWE 验证链路，但尚未证明历史记忆能稳定提高 SWE-bench 最终解决率。", st),
+        callout("阶段结论：历史长对话回放同时改善质量、召回与 token 成本，但相关对话在方法开发中已被观察；编程侧已完成 linked retrieval、延迟反馈、影子学习、晋升/回退和可执行 SWE 验证链路，但尚未证明历史记忆能稳定提高 SWE-bench 最终解决率。", st),
         Spacer(1, 6 * mm),
         metric_cards(st),
         Spacer(1, 7 * mm),
@@ -213,7 +213,7 @@ def build_story(st):
             ["材料", "内容", "状态"],
             ["实现代码", "AdaptiveRecallPolicy、CodingFeedback、PromotionGate、AutoRecall 接入", "已实现并测试"],
             ["实验链路", "SWE search/read/test/edit、复现门、窄回归、失败分类与回滚", "可运行"],
-            ["初步结果", "LoCoMo 独立对照、5 题 SWE 结果、promotion smoke", "已固化"],
+            ["初步结果", "LoCoMo 历史回放、5 题 SWE 结果、promotion smoke", "已固化"],
             ["研究边界", "不把机制通过写成成功率提升，不包含 gold patch 或 hidden tests", "已声明"],
         ], [27*mm, 116*mm, 31*mm], row_colors=[colors.white, PALE_BLUE, colors.white, PALE_AMBER]),
         Spacer(1, 5 * mm),
@@ -294,8 +294,8 @@ def build_story(st):
     ]
 
     story += [
-        p("4. 长对话场景：已有正向独立对照", st["h1"]),
-        p("冻结策略在 5 个未参与方法开发的 LoCoMo 对话上验证。每个对话前 24 条用于 onboarding，之后共评价 923 条 query；比较对象是同一输入下的 Top-10。", st["body"]),
+        p("4. 长对话场景：历史回放正向结果", st["h1"]),
+        p("冻结策略在 5 个 LoCoMo 对话上做历史回放。每个对话前 24 条用于 onboarding，之后共评价 923 条 query；比较对象是同一输入下的 Top-10。这些对话在方法开发中已被观察，不是独立 holdout。", st["body"]),
         long_result_chart(),
         table([
             ["指标", "Adaptive", "相对 Top-10", "95% CI（query / dialog cluster）"],
@@ -306,10 +306,10 @@ def build_story(st):
         ], [38*mm, 27*mm, 32*mm, 77*mm], row_colors=[PALE_GREEN, PALE_GREEN, PALE_GREEN, colors.white]),
         Spacer(1, 6 * mm),
         p("可支持的结论", st["h2"]),
-        callout("在这 5 个独立对话、923 条评估 query 的固定协议下，自适应组织相对 Top-10 同时提高 F1 与 evidence recall，并减少输入 token；两类 bootstrap 区间均不跨 0。", st, PALE_GREEN, GREEN),
+        callout("在这 5 个已观察对话、923 条评估 query 的固定历史回放协议下，自适应组织相对 Top-10 同时提高 F1 与 evidence recall，并减少输入 token；两类 bootstrap 区间均不跨 0。", st, PALE_GREEN, GREEN),
         Spacer(1, 5 * mm),
         p("边界", st["h2"]),
-        p("独立单位只有 5 个对话，且 LoCoMo 是公开长对话代理任务，不是软件仓库任务。它证明自适应记忆机制可以产生质量/成本收益，但不能直接推导 SWE-bench 成功率提升。", st["body"]),
+        p("相关对话已参与方法开发，且 LoCoMo 是公开长对话代理任务，不是软件仓库任务。该结果是机制证据，不能作为独立泛化证据，也不能直接推导 SWE-bench 成功率提升。", st["body"]),
         PageBreak(),
     ]
 

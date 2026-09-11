@@ -2,7 +2,7 @@
 
 本仓库是基于 [TencentDB Agent Memory](https://github.com/TencentCloud/TencentDB-Agent-Memory) `v2.0.0-beta.1` 的题目三 C 精炼实现，用于研究：在不改写底层 FTS5、向量检索和 RRF 的前提下，如何利用延迟反馈自适应组织记忆，并将该能力迁移到编程任务。
 
-> 当前状态：长对话场景已得到独立对照中的质量与 token 改善；编程场景已完成反馈适配、影子学习、晋升/回退门和 SWE 求解实验链路，但尚未证明历史记忆能稳定提高 SWE-bench 最终解决率。
+> 当前状态：长对话场景在历史回放中得到质量与 token 改善，但最终冻结切分没有守住 recall；编程场景已完成反馈适配、影子学习、晋升/回退门和 SWE 求解实验链路，但尚未证明历史记忆能稳定提高 SWE-bench 最终解决率。
 
 ## 核心方案
 
@@ -49,7 +49,7 @@ MemoryCore Top-10 基线
 
 ### 长对话自适应
 
-冻结策略在 5 个未参与调参的 LoCoMo 对话、923 条 onboarding 后 query 上，相对 Top-10 的 pooled 结果为：
+冻结策略在 5 个 LoCoMo 对话、923 条 onboarding 后 query 的历史回放中，相对 Top-10 的 pooled 结果为：
 
 | 指标 | 差值 |
 |---|---:|
@@ -58,7 +58,9 @@ MemoryCore Top-10 基线
 | 平均输入 token | `-63.57` |
 | Token 节省率 | `23.28%` |
 
-query-level 与 dialog-cluster bootstrap 区间均不跨 0；但只有 5 个独立对话，不能外推到任意团队。
+query-level 与 dialog-cluster bootstrap 区间均不跨 0；但这些对话在方法开发中已被观察，不能作为独立泛化证据。最后再固定 3 个对话选参数、2 个对话验证：KNN24 在 296 条验证 query 上节省 19.35% 上下文，但 F1/recall 分别为 `-0.00520/-0.03027`，所以没有晋升，Top-10 继续作为默认安全策略。
+
+独立 LongMemEval 的 30 条缓存答案上，`ridge-gated-0.01` 只对 4 条 query 使用 Top-5，F1/recall 均不下降，每题节省 22.9 token；该小样本结论不直接迁移到 LoCoMo。
 
 ### 编程场景
 
@@ -83,6 +85,7 @@ MemoryCore/
   scripts/topic3-c/
     update-adaptive-policy.ts   # 离线/延迟反馈更新
     coding-feedback-promotion-replay.ts
+    final-confidence-replay.ts  # 自包含长对话冻结回放
     swebench-coding-feedback-adapter.ts
     swe-agent-v2.py             # 实验性 SWE search/read/test/edit 闭环
     test_swe_agent_v2.py
@@ -92,14 +95,16 @@ docs/topic3c/
   RESULTS.md
   report/render_report.py
 output/pdf/
-  topic3c-adaptive-memory-initial-report-cn.pdf
+  topic3c-adaptive-memory-final-report-cn.pdf
 results/
   initial-results.json
+  long-dialog-action-table.json # 仅含特征和逐动作指标的紧凑输入
+  final-confidence-replay.json
 ```
 
 其余目录来自上游 `v2.0.0-beta.1`，便于审查本方案相对基线的增量。
 
-精简中期报告见 [自适应记忆编程优化：实现代码与初步测试结果](output/pdf/topic3c-adaptive-memory-initial-report-cn.pdf)。
+最终实验报告见 [自适应记忆编程优化：最终实验报告](output/pdf/topic3c-adaptive-memory-final-report-cn.pdf)。它已替代口径过时的 initial report。
 
 ## 快速验证
 
@@ -109,6 +114,7 @@ results/
 npm install
 npm run test:topic3c
 npm run smoke:topic3c
+npm run eval:topic3c
 ```
 
 SWE solver 的纯单元测试需要 Python 3.9+ 和 pytest：
