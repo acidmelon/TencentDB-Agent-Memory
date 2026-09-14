@@ -2,8 +2,8 @@
   "protocol": "topic3c-curated-final-results-v2",
   "baseline": "TencentDB-Agent-Memory v2.0.0-beta.1",
   "clean_repository_verification": {
-    "typescript_test_files": 3,
-    "typescript_tests_passed": 17,
+    "typescript_test_files": 4,
+    "typescript_tests_passed": 31,
     "python_tests_passed": 14,
     "plugin_build_passed": true,
     "promotion_smoke_passed": true,
@@ -15,7 +15,7 @@
     "historical_evaluation_queries": 923,
     "historical_replay_delta_vs_top10": {
       "token_f1": 0.02781,
-      "evidence_recall": 0.03952,
+      "answer_token_recall": 0.03952,
       "mean_input_tokens": -63.57,
       "token_savings_rate": 0.2328
     },
@@ -26,7 +26,7 @@
       "selected_confidence_multiplier": 0,
       "delta_vs_top10": {
         "token_f1": -0.005195654493831478,
-        "evidence_recall": -0.03026730214230214,
+        "answer_token_recall": -0.03026730214230214,
         "mean_input_tokens": -50.59121621621622
       },
       "promoted": false
@@ -36,30 +36,41 @@
       "top5_queries": 4,
       "delta_vs_top10": {
         "token_f1": 0,
-        "evidence_recall": 0,
+        "answer_token_recall": 0,
         "mean_input_tokens": -22.9
       },
-      "token_ci95": [-46.37, -3.53],
+      "token_ci95": [
+        -46.37,
+        -3.53
+      ],
       "cross_dataset_transfer": false
     }
   },
   "coding": {
     "public_reproduction": {
       "tasks": 5,
-      "valid_reproductions": 5,
       "official_resolved": 1,
-      "api_tokens": 114384
+      "api_tokens": 114384,
+      "scripts_generation_valid": 5,
+      "valid_generated_patches": 4,
+      "effective_bug_reproductions": "Not established by script-generation validity; see per-task audit."
     },
     "public_reproduction_with_repair": {
       "tasks": 5,
-      "valid_reproductions": 5,
       "repair_triggered": 1,
       "official_resolved": 1,
-      "api_tokens": 148010
+      "api_tokens": 148010,
+      "scripts_generation_valid": 5,
+      "valid_generated_patches": 4,
+      "effective_bug_reproductions": "Not established by script-generation validity; see per-task audit."
     },
     "real_contract_feedback_rows": 2,
     "required_feedback_rows": 24,
     "conclusion": "Coding feedback and safety mechanisms are implemented; stable memory-caused SWE-bench success-rate improvement is not established."
   },
-  "claim_boundary": "The five LoCoMo dialogs were observed during method development. Historical replay is mechanism evidence, not a new independent benchmark."
+  "claim_boundary": "The five LoCoMo dialogs were observed during method development. Historical replay is mechanism evidence, not a new independent benchmark.",
+  "metric_definitions": {
+    "answer_token_recall": "Reference-answer token overlap, not retrieval evidence coverage",
+    "mean_input_tokens": "Injected memory context only, not end-to-end API token usage"
+  }
 }

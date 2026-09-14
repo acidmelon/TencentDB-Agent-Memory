@@ -11,6 +11,40 @@ afterEach(async () => {
 });
 
 describe("AdaptivePromotionGate", () => {
+  it("does not count repeated feedback for the same task as independent evidence", async () => {
+    const dir = await mkdtemp(path.join(os.tmpdir(), "tdai-promotion-"));
+    dirs.push(dir);
+    const gate = new AdaptivePromotionGate(dir);
+    const row = { scope: "scope", taskId: "task", source: "coding" as const, qualityDelta: 0, tokenSavingsRate: 0.2 };
+    await gate.record(row);
+    await expect(gate.record(row)).rejects.toThrow("Duplicate promotion task");
+    expect((await gate.status("scope")).observationCount).toBe(1);
+  });
+
+  it("revokes promotion when subsequent quality feedback fails the gate", async () => {
+    const dir = await mkdtemp(path.join(os.tmpdir(), "tdai-promotion-"));
+    dirs.push(dir);
+    const gate = new AdaptivePromotionGate(dir, { minObservations: 2, minCodingObservations: 2, confidenceZ: 0, autoPromote: true });
+    for (let index = 0; index < 2; index += 1) {
+      await gate.record({ scope: "scope", taskId: `good-${index}`, source: "coding", qualityDelta: 0, tokenSavingsRate: 0.2 });
+    }
+    expect((await gate.status("scope")).canActivate).toBe(true);
+    const result = await gate.record({ scope: "scope", taskId: "quality-loss", source: "coding", qualityDelta: -1, tokenSavingsRate: 0.2 });
+    expect(result.stage).toBe("demoted");
+    expect(result.canActivate).toBe(false);
+  });
+
+  it("keeps scopes with long shared prefixes separate after reloading", async () => {
+    const dir = await mkdtemp(path.join(os.tmpdir(), "tdai-promotion-"));
+    dirs.push(dir);
+    const prefix = "project/".repeat(30);
+    const gate = new AdaptivePromotionGate(dir);
+    await gate.record({ scope: `${prefix}one`, taskId: "task", source: "coding", qualityDelta: 0, tokenSavingsRate: 0.2 });
+    const reloaded = new AdaptivePromotionGate(dir);
+    expect((await reloaded.status(`${prefix}two`)).observationCount).toBe(0);
+    expect((await reloaded.status(`${prefix}one`)).observationCount).toBe(1);
+  });
+
   it("keeps a new project in shadow until every gate passes", async () => {
     const dir = await mkdtemp(path.join(os.tmpdir(), "tdai-promotion-")); dirs.push(dir);
     const gate = new AdaptivePromotionGate(dir, { minObservations: 4, minCodingObservations: 4, minCodingCoverage: 1, minTokenSavingsRate: 0.1, confidenceZ: 0 });

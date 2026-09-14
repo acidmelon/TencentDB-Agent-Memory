@@ -35,4 +35,4 @@
 
 当前结果不能证明该方案在 SWE-bench 上稳定提高最终解决率。5 题样本中 reproduction + repair 没有增加 resolved 数；Matplotlib 个案支持 linked retrieval 的价值，Astropy 个案则说明“成功触发记忆”不等于“生成有效补丁”。长对话最终冻结切分也没有守住 recall。因此 promotion gate 目前保留在实验适配/回放层，不能表述为已在线上默认启用。
 
-下一阶段应在更多独立任务上冻结模型、预算和基线，比较无记忆、Top-10、候选策略三组，并报告 resolved、公开测试、回归、token 和失败类型。只有跨项目重复出现收益后，才应将 promotion gate 接入默认自动召回链路。
+下一阶段应在更多独立任务上冻结模型、预算和基线，比较无记忆、Top-10、候选策略三组，并报告 resolved、公开测试、回归、token 和失败类型。2026-09-14 已把 promotion gate 接入自动召回，但 adaptive 默认关闭；候选策略的实际晋升仍需独立质量证据。

@@ -32,7 +32,7 @@
     "test:oss": "vitest run -c vitest.oss.config.ts",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:topic3c": "vitest run src/core/hooks/adaptive-policy.test.ts src/core/hooks/coding-feedback.test.ts src/core/hooks/promotion-gate.test.ts",
+    "test:topic3c": "vitest run src/core/hooks/adaptive-policy.test.ts src/core/hooks/coding-feedback.test.ts src/core/hooks/promotion-gate.test.ts src/core/hooks/auto-recall.test.ts",
     "smoke:topic3c": "tsx scripts/topic3-c/coding-feedback-promotion-replay.ts --output ../results/coding-feedback-promotion-smoke.json",
     "eval:topic3c": "tsx scripts/topic3-c/final-confidence-replay.ts",
     "test:standalone:memory": "bash __tests__/standalone/e2e.sh",

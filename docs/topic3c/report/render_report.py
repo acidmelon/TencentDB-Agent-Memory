@@ -115,7 +115,7 @@ def callout(text: str, st, background=PALE_BLUE, accent=BLUE):
 def metric_cards(st):
     values = [
         ("+0.02781", "Token F1 vs Top-10"),
-        ("+0.03952", "Evidence recall vs Top-10"),
+        ("+0.03952", "答案词元召回率 vs Top-10"),
         ("23.28%", "输入 token 节省率"),
         ("1 / 5", "SWE official resolved"),
     ]
@@ -170,7 +170,7 @@ def long_result_chart():
     d = Drawing(492, 150)
     items = [
         ("Token F1", 0.02781, 0.05, BLUE),
-        ("Evidence recall", 0.03952, 0.05, TEAL),
+        ("答案词元召回率", 0.03952, 0.05, TEAL),
         ("Token savings", 0.2328, 0.25, GREEN),
     ]
     for i, (label, value, maximum, color) in enumerate(items):
@@ -259,7 +259,7 @@ def build_story(st):
             ["维度", "结论"],
             ["与上游风格一致性", "沿用 TypeScript ESM、typed interface、现有 hook 目录和日志方式；Python 实验代码与生产路径隔离。"],
             ["注释", "主要解释安全锚点、反馈语义与 fallback 原因；没有为显然语句堆叠注释。"],
-            ["测试", "3 个 TypeScript 文件 17 项、Python 14 项、插件构建及 promotion smoke 均通过。"],
+            ["测试", "3 个 TypeScript 文件 19 项、Python 14 项、插件构建及 promotion smoke 均通过。"],
             ["已修问题", "AutoRecall 现会把调用方提供的 projectId 传入策略作用域；容忍阈值注释明确为 delta 下界。"],
             ["刻意不做的重构", "adaptive-policy.ts 约 458 行，后续可拆持久化/统计/学习器；中期提交前拆分会扩大回归面。"],
         ], [39*mm,135*mm], row_colors=[PALE_GREEN, colors.white, PALE_GREEN, colors.white, PALE_AMBER]),
@@ -300,13 +300,13 @@ def build_story(st):
         table([
             ["指标", "Adaptive", "相对 Top-10", "95% CI（query / dialog cluster）"],
             ["Token F1", "0.21458", "+0.02781", "[+0.01427,+0.04153] / [+0.01851,+0.03546]"],
-            ["Evidence recall", "0.36380", "+0.03952", "[+0.02046,+0.05896] / [+0.00964,+0.05881]"],
-            ["平均输入 token", "209.50", "-63.57", "[-67.28,-59.89] / [-73.14,-55.14]"],
+            ["答案词元召回率", "0.36380", "+0.03952", "[+0.02046,+0.05896] / [+0.00964,+0.05881]"],
+            ["平均记忆上下文 token", "209.50", "-63.57", "[-67.28,-59.89] / [-73.14,-55.14]"],
             ["Token 节省率", "-", "23.28%", "由同一批配对输入计算"],
         ], [38*mm, 27*mm, 32*mm, 77*mm], row_colors=[PALE_GREEN, PALE_GREEN, PALE_GREEN, colors.white]),
         Spacer(1, 6 * mm),
         p("可支持的结论", st["h2"]),
-        callout("在这 5 个已观察对话、923 条评估 query 的固定历史回放协议下，自适应组织相对 Top-10 同时提高 F1 与 evidence recall，并减少输入 token；两类 bootstrap 区间均不跨 0。", st, PALE_GREEN, GREEN),
+        callout("在这 5 个已观察对话、923 条评估 query 的固定历史回放协议下，自适应组织相对 Top-10 同时提高 F1 与 答案词元召回率，并减少输入 token；两类 bootstrap 区间均不跨 0。", st, PALE_GREEN, GREEN),
         Spacer(1, 5 * mm),
         p("边界", st["h2"]),
         p("相关对话已参与方法开发，且 LoCoMo 是公开长对话代理任务，不是软件仓库任务。该结果是机制证据，不能作为独立泛化证据，也不能直接推导 SWE-bench 成功率提升。", st["body"]),
@@ -358,7 +358,7 @@ def build_story(st):
             ["TypeScript", "npm run test:topic3c", "3 files / 17 passed"],
             ["Build", "npm run build:plugin", "passed"],
             ["Smoke", "npm run smoke:topic3c", "task 24 promoted; hard failure demoted"],
-            ["Python", "python -m pytest -q scripts/topic3-c/test_swe_agent_v2.py", "14 passed"],
+            ["Python", "python scripts/topic3-c/test_swe_agent_v2.py", "14 passed"],
         ], [32*mm, 98*mm, 44*mm], row_colors=[colors.white, PALE_GREEN, PALE_GREEN, PALE_GREEN, PALE_GREEN]),
         Spacer(1, 4 * mm),
         p("下一阶段实验", st["h2"]),

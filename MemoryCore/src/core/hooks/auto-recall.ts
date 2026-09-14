@@ -29,6 +29,7 @@ import {
 } from "../profile/profile-sync.js";
 import type { Logger } from "../types.js";
 import { adaptiveScope, getAdaptiveRecallPolicy, type AdaptiveDecision } from "./adaptive-policy.js";
+import { AdaptivePromotionGate, decideWithPromotionGate } from "./promotion-gate.js";
 
 const TAG = "[memory-tdai] [recall]";
 const RECALL_TRUNCATION_SUFFIX = "…（已截断；可用 tdai_memory_search 或 tdai_conversation_search 查看详情）";
@@ -106,6 +107,27 @@ export async function performAutoRecall(params: {
   /** L2/L3 profile scope. Defaults to the standalone default team and agent. */
   profileIsolation?: ProfileIsolation;
 }): Promise<RecallResult | undefined> {
+  const result = await performAutoRecallAttempt(params);
+  if (!result?.error || !params.cfg.recall.adaptivePolicy?.enabled) return result;
+
+  // Retry the untouched static configuration, including its original K. Each
+  // attempt has the existing recall timeout; a failed baseline stays visible.
+  params.logger?.warn?.(`${TAG} adaptive recall failed; retrying the base recall configuration`);
+  return performAutoRecallAttempt({
+    ...params,
+    cfg: {
+      ...params.cfg,
+      recall: {
+        ...params.cfg.recall,
+        adaptivePolicy: { ...params.cfg.recall.adaptivePolicy, enabled: false },
+      },
+    },
+  });
+}
+
+async function performAutoRecallAttempt(
+  params: Parameters<typeof performAutoRecall>[0],
+): Promise<RecallResult | undefined> {
   const { cfg, logger } = params;
   const timeoutMs = cfg.recall.timeoutMs ?? 5000;
 
@@ -189,25 +211,33 @@ async function performAutoRecallCore(params: {
     effectiveStrategy = cfg.recall.strategy ?? "hybrid";
     // The policy is a sidecar: it can only change the bounded maxResults
     // parameter. Any read/parse failure leaves the original static config in use.
-    try {
-      const policy = getAdaptiveRecallPolicy(pluginDataDir, cfg.recall.adaptivePolicy);
-      adaptiveDecision = await policy.decide(
-        adaptiveScope(profileIsolation.teamId, profileIsolation.agentId, profileIsolation.projectId),
-        {
-          queryLength: userText.length,
-          hasTemporalCue: /(when|before|after|date|year|recent|latest|之前|之后|时间|最近)/i.test(userText),
-          hasCodeCue: /(?:file|path|function|method|class|module|import|package|version|error|exception|stack|test|compile|build|文件|函数|报错|测试)/i.test(userText),
-          fileCount: (userText.match(/(?:[A-Za-z]:[\\/])?[^\s`]+\.(?:ts|tsx|js|jsx|py|java|go|rs|cpp|h|json|yaml|yml)/gi) ?? []).length,
-          functionCount: (userText.match(/\b(?:function|method|class|fn|def)\s+[A-Za-z_$][\w$]*/gi) ?? []).length,
-          dependencyChange: /(?:package(?:\.json|-lock)|requirements|pyproject|cargo\.toml|go\.mod|依赖|版本升级|upgrade|dependency)/i.test(userText),
-          stackTracePresent: /(?:stack trace|traceback|exception|at [A-Za-z_$][\w$]*\.|报错堆栈|调用栈)/i.test(userText),
-          staleEvidenceRisk: /(?:deprecated|obsolete|stale|outdated|旧版本|过时|已废弃|迁移后)/i.test(userText) ? 1 : 0,
-        },
-      );
-      logger?.debug?.(`${TAG} adaptive decision: action=${adaptiveDecision.action} k=${adaptiveDecision.effectiveK} shadow=${adaptiveDecision.shadow} observations=${adaptiveDecision.observationCount} scope=${adaptiveDecision.scope}`);
-    } catch (err) {
-      logger?.warn?.(`${TAG} adaptive policy unavailable; using configured Top-K: ${err instanceof Error ? err.message : String(err)}`);
-      adaptiveDecision = undefined;
+    if (cfg.recall.adaptivePolicy?.enabled) {
+      try {
+        const policy = getAdaptiveRecallPolicy(pluginDataDir, cfg.recall.adaptivePolicy);
+        // Reload promotion state so an external feedback collector's demotion
+        // takes effect on the next recall without restarting the gateway.
+        const gate = new AdaptivePromotionGate(pluginDataDir);
+        const gated = await decideWithPromotionGate(
+          policy,
+          gate,
+          adaptiveScope(profileIsolation.teamId, profileIsolation.agentId, profileIsolation.projectId),
+          {
+            queryLength: userText.length,
+            hasTemporalCue: /(when|before|after|date|year|recent|latest|之前|之后|时间|最近)/i.test(userText),
+            hasCodeCue: /(?:file|path|function|method|class|module|import|package|version|error|exception|stack|test|compile|build|文件|函数|报错|测试)/i.test(userText),
+            fileCount: (userText.match(/(?:[A-Za-z]:[\\/])?[^\s`]+\.(?:ts|tsx|js|jsx|py|java|go|rs|cpp|h|json|yaml|yml)/gi) ?? []).length,
+            functionCount: (userText.match(/\b(?:function|method|class|fn|def)\s+[A-Za-z_$][\w$]*/gi) ?? []).length,
+            dependencyChange: /(?:package(?:\.json|-lock)|requirements|pyproject|cargo\.toml|go\.mod|依赖|版本升级|upgrade|dependency)/i.test(userText),
+            stackTracePresent: /(?:stack trace|traceback|exception|at [A-Za-z_$][\w$]*\.|报错堆栈|调用栈)/i.test(userText),
+            staleEvidenceRisk: /(?:deprecated|obsolete|stale|outdated|旧版本|过时|已废弃|迁移后)/i.test(userText) ? 1 : 0,
+          },
+        );
+        adaptiveDecision = gated.activeDecision;
+        logger?.debug?.(`${TAG} adaptive decision: action=${adaptiveDecision.action} k=${adaptiveDecision.effectiveK} shadow=${adaptiveDecision.shadow} observations=${adaptiveDecision.observationCount} scope=${adaptiveDecision.scope}`);
+      } catch (err) {
+        logger?.warn?.(`${TAG} adaptive policy unavailable; using configured Top-K: ${err instanceof Error ? err.message : String(err)}`);
+        adaptiveDecision = undefined;
+      }
     }
     const searchCfg = adaptiveDecision
       ? {
@@ -221,22 +251,20 @@ async function performAutoRecallCore(params: {
     memoryLines = searchResult.lines;
     // Optional low-cost auxiliary organization action selected by the policy.
     // It reuses the existing FTS5 L0 API and never replaces the L1 anchor.
-    if (adaptiveDecision?.action === "top5-l0" && !adaptiveDecision.shadow && vectorStore?.isFtsAvailable()) {
-      try {
-        const l0Query = buildFtsQuery(sanitizeText(userText));
-        if (l0Query) {
-          const l0 = await vectorStore.searchL0Fts(l0Query, 2, {
-            teamId: profileIsolation.teamId,
-            userId: profileIsolation.userId,
-            agentId: profileIsolation.agentId,
-          });
-          const l0Lines = l0.map((row) => `- [L0] ${row.message_text}`);
-          memoryLines = [...memoryLines, ...l0Lines];
-          logger?.debug?.(`${TAG} adaptive L0 BM25 neighbors: ${l0Lines.length}`);
-        }
-      } catch (err) {
-        // L0 is auxiliary; a failure leaves the selected L1 results intact.
-        logger?.warn?.(`${TAG} adaptive L0 neighbor lookup failed; retaining L1 results: ${err instanceof Error ? err.message : String(err)}`);
+    if (adaptiveDecision?.action === "top5-l0" && !adaptiveDecision.shadow) {
+      if (!vectorStore?.isFtsAvailable()) {
+        throw new Error("Adaptive L0 retrieval requires FTS; restoring base recall");
+      }
+      const l0Query = buildFtsQuery(sanitizeText(userText));
+      if (l0Query) {
+        const l0 = await vectorStore.searchL0Fts(l0Query, 2, {
+          teamId: profileIsolation.teamId,
+          userId: profileIsolation.userId,
+          agentId: profileIsolation.agentId,
+        });
+        const l0Lines = l0.map((row) => `- [L0] ${row.message_text}`);
+        memoryLines = [...memoryLines, ...l0Lines];
+        logger?.debug?.(`${TAG} adaptive L0 BM25 neighbors: ${l0Lines.length}`);
       }
     }
     searchTiming = searchResult.timing;
@@ -569,7 +597,9 @@ async function searchMemories(
     return await searchHybrid(cleanText, pluginDataDir, maxResults, threshold, vectorStore!, embeddingService!, logger, embeddingCallOpts);
   } catch (err) {
     logger?.warn?.(`${TAG} Memory search failed (strategy=${effectiveStrategy}): ${err instanceof Error ? err.message : String(err)}`);
-    return emptyResult;
+    // Preserve the existing structured error contract instead of reporting a
+    // dependency failure as a successful search with no matching memories.
+    throw err;
   }
 }
 

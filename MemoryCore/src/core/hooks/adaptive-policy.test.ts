@@ -10,6 +10,17 @@ afterEach(async () => {
 });
 
 describe("AdaptiveRecallPolicy", () => {
+  it("does not share persisted feedback between long project scopes", async () => {
+    const dir = await mkdtemp(path.join(os.tmpdir(), "tdai-adaptive-"));
+    dirs.push(dir);
+    const prefix = "project/".repeat(30);
+    const policy = new AdaptiveRecallPolicy(dir);
+    await policy.update({ scope: `${prefix}one`, action: "top5", actionQuality: 1, baselineQuality: 0.5, actionTokens: 50, baselineTokens: 100 });
+    const reloaded = new AdaptiveRecallPolicy(dir);
+    expect((await reloaded.decide(`${prefix}two`, { queryLength: 10 })).observationCount).toBe(0);
+    expect((await reloaded.decide(`${prefix}one`, { queryLength: 10 })).observationCount).toBe(1);
+  });
+
   it("isolates learned state by project when the caller provides a project id", () => {
     expect(adaptiveScope("team", "agent", "project-a")).toBe("team/agent/project-a");
     expect(adaptiveScope("team", "agent", "project-b")).toBe("team/agent/project-b");
@@ -144,10 +155,60 @@ describe("AdaptiveRecallPolicy", () => {
     expect(decision.decisionReason).toBe("linucb-no-eligible-action");
   });
 
+  it("accepts a contextual action when paired recall feedback passes the gate", async () => {
+    const dir = await mkdtemp(path.join(os.tmpdir(), "tdai-adaptive-")); dirs.push(dir);
+    const policy = new AdaptiveRecallPolicy(dir, {
+      enabled: true,
+      shadow: false,
+      learner: "linucb",
+      minObservations: 2,
+      minActionObservations: 2,
+      requireRecallFeedback: true,
+      recallTolerance: 0,
+    });
+    const features = { queryLength: 100, hasCodeCue: true };
+    const feedback = {
+      scope: "team/agent/positive-recall-gate",
+      action: "top5-l0" as const,
+      actionQuality: 0.8,
+      baselineQuality: 0.6,
+      actionRecall: 0.8,
+      baselineRecall: 0.5,
+      actionTokens: 80,
+      baselineTokens: 160,
+      source: "locomo" as const,
+      features,
+    };
+    await policy.update(feedback);
+    await policy.update(feedback);
+    const decision = await policy.decide(feedback.scope, features);
+    expect(decision.action).toBe("top5-l0");
+    expect(decision.decisionReason).toBe("linucb-accepted");
+  });
+
   it("rejects malformed delayed feedback before it can corrupt state", async () => {
     const dir = await mkdtemp(path.join(os.tmpdir(), "tdai-adaptive-")); dirs.push(dir);
     const policy = new AdaptiveRecallPolicy(dir, { enabled: true, shadow: false });
     await expect(policy.update({ scope: "scope", action: "top5", actionTokens: 10, baselineTokens: 20 })).rejects.toThrow("paired quality");
     expect((await policy.decide("scope", { queryLength: 10 })).observationCount).toBe(0);
+  });
+
+  it("keeps numerically correct recall variance for confidence-aware policies", async () => {
+    const dir = await mkdtemp(path.join(os.tmpdir(), "tdai-adaptive-")); dirs.push(dir);
+    const policy = new AdaptiveRecallPolicy(dir, { enabled: true, shadow: false });
+    const common = {
+      scope: "team/agent/recall-variance",
+      action: "top5" as const,
+      actionQuality: 0.5,
+      baselineQuality: 0.5,
+      actionTokens: 80,
+      baselineTokens: 100,
+    };
+    await policy.update({ ...common, actionRecall: 0, baselineRecall: 0 });
+    const updated = await policy.update({ ...common, actionRecall: 1, baselineRecall: 0 });
+    const state = updated.state as unknown as {
+      actions: Record<string, { recallCount?: number; recallMean?: number; recallM2?: number }>;
+    };
+    expect(state.actions.top5).toMatchObject({ recallCount: 2, recallMean: 0.5, recallM2: 0.5 });
   });
 });

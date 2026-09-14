@@ -7,8 +7,8 @@
 | 指标 | Adaptive | 相对 Top-10 |
 |---|---:|---:|
 | Token F1 | 0.21458 | +0.02781 |
-| Evidence recall | 0.36380 | +0.03952 |
-| 平均输入 token | 209.50 | -63.57 |
+| 答案词元召回率 | 0.36380 | +0.03952 |
+| 平均记忆上下文 token | 209.50 | -63.57 |
 | Token 节省率 | - | 23.28% |
 
 paired bootstrap 95% CI：
@@ -41,7 +41,7 @@ LongMemEval 30 条缓存答案上的 `ridge-gated-0.01` 得到 F1/recall 差值 
 
 本次从 `v2.0.0-beta.1` 重建的干净仓库验证结果：
 
-- Topic 3C TypeScript：3 个测试文件，17 个测试全部通过；
+- Topic 3C TypeScript：4 个测试文件，31 个测试全部通过；
 - SWE solver Python：14 个测试全部通过；
 - MemoryCore plugin build：通过；
 - promotion smoke：第 24 条正反馈晋升，随后 hard regression 立即降级。
@@ -62,8 +62,8 @@ LongMemEval 30 条缓存答案上的 `ridge-gated-0.01` 得到 F1/recall 差值 
 
 | 方案/任务 | Public validation | Official resolved | API token |
 |---|---:|---:|---:|
-| 5 题 public reproduction | 5/5 reproduction 有效 | 1/5 | 114,384 |
-| public reproduction + repair | 5/5 reproduction 有效 | 1/5 | 148,010 |
+| 5 题 public reproduction | 5/5 脚本生成校验；补丁有效 4/5 | 1/5 | 114,384 |
+| public reproduction + repair | 5/5 脚本生成校验；补丁有效 4/5 | 1/5 | 148,010 |
 | Astropy 13236 none | 1/1 | 0/1 | 97,268 |
 | Astropy 13236 mixed | 0/1 | 0/1 | 140,582 |
 | Astropy 13236 gated auto | 0/1 | 0/1 | 135,497 |

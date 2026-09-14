@@ -1,4 +1,5 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import path from "node:path";
 
 /** A deliberately small action space keeps online adaptation bounded and auditable. */
@@ -176,7 +177,7 @@ function safeConfig(input?: Partial<AdaptiveRecallConfig>): AdaptiveRecallConfig
 }
 
 function scopeFile(root: string, scope: string): string {
-  const encoded = Buffer.from(scope, "utf8").toString("base64url").slice(0, 160);
+  const encoded = createHash("sha256").update(scope).digest("hex");
   return path.join(root, "adaptive-policy", `${encoded}.json`);
 }
 
@@ -226,6 +227,19 @@ function feedbackQuality(feedback: AdaptiveFeedback): { action: number; baseline
     throw new Error("Adaptive feedback quality must be within [0, 1]");
   }
   return { action: Number(action), baseline: Number(baseline) };
+}
+
+function updateRecallStats(stats: ActionStats, actionRecall: number | undefined, baselineRecall: number | undefined): void {
+  if (!Number.isFinite(actionRecall) || !Number.isFinite(baselineRecall)
+    || Number(actionRecall) < 0 || Number(actionRecall) > 1
+    || Number(baselineRecall) < 0 || Number(baselineRecall) > 1) return;
+  const recallDelta = Number(actionRecall) - Number(baselineRecall);
+  const recallCount = (stats.recallCount ?? 0) + 1;
+  const previousRecallMean = stats.recallMean ?? 0;
+  const meanDelta = recallDelta - previousRecallMean;
+  stats.recallMean = previousRecallMean + meanDelta / recallCount;
+  stats.recallM2 = (stats.recallM2 ?? 0) + meanDelta * (recallDelta - stats.recallMean);
+  stats.recallCount = recallCount;
 }
 
 async function saveState(file: string, state: PolicyState): Promise<void> {
@@ -296,7 +310,9 @@ export class AdaptiveRecallPolicy {
   }
 
   async decide(scope: string, features: AdaptiveFeatures): Promise<AdaptiveDecision> {
-    const state = await this.state(scope);
+    // Feedback may be written by the CLI in a separate process. Decisions read
+    // the atomic snapshot rather than retaining an obsolete in-memory policy.
+    const state = await loadState(scopeFile(this.root, scope), this.cfg);
     // Top-10 is the universal prior and remains the only action before warmup.
     let action: AdaptiveRecallAction = "top10";
     let predictedReward: number | undefined;
@@ -384,17 +400,7 @@ export class AdaptiveRecallPolicy {
       stats.rewardM2 += delta * (reward - stats.rewardMean);
       stats.f1Mean += (f1Delta - stats.f1Mean) / stats.count;
       stats.savingsMean += (savings - stats.savingsMean) / stats.count;
-      const actionRecall = feedback.actionRecall;
-      const baselineRecall = feedback.baselineRecall;
-      if (Number.isFinite(actionRecall) && Number.isFinite(baselineRecall)
-        && Number(actionRecall) >= 0 && Number(actionRecall) <= 1
-        && Number(baselineRecall) >= 0 && Number(baselineRecall) <= 1) {
-        const recallDelta = Number(actionRecall) - Number(baselineRecall);
-        const recallCount = (stats.recallCount ?? 0) + 1;
-        stats.recallMean = (stats.recallMean ?? 0) + (recallDelta - (stats.recallMean ?? 0)) / recallCount;
-        stats.recallM2 = (stats.recallM2 ?? 0) + (recallDelta - (stats.recallMean ?? 0)) * (recallDelta - (stats.recallMean ?? 0));
-        stats.recallCount = recallCount;
-      }
+      updateRecallStats(stats, feedback.actionRecall, feedback.baselineRecall);
       state.actions[feedback.action] = stats;
       const featureVector = adaptiveFeatureVector(feedback.features ?? {
         queryLength: 0,
@@ -418,6 +424,7 @@ export class AdaptiveRecallPolicy {
       bucketStats.rewardM2 += bucketDelta * (reward - bucketStats.rewardMean);
       bucketStats.f1Mean += (f1Delta - bucketStats.f1Mean) / bucketStats.count;
       bucketStats.savingsMean += (savings - bucketStats.savingsMean) / bucketStats.count;
+      updateRecallStats(bucketStats, feedback.actionRecall, feedback.baselineRecall);
       bucket[feedback.action] = bucketStats;
       state.contexts[key] = bucket;
       state.observations += 1;
@@ -439,7 +446,7 @@ const policyRegistry = new Map<string, AdaptiveRecallPolicy>();
 
 export function getAdaptiveRecallPolicy(root: string, config?: Partial<AdaptiveRecallConfig>): AdaptiveRecallPolicy {
   let policy = policyRegistry.get(root);
-  if (!policy) {
+  if (!policy || JSON.stringify(policy.config) !== JSON.stringify(safeConfig(config))) {
     policy = new AdaptiveRecallPolicy(root, config);
     policyRegistry.set(root, policy);
   }

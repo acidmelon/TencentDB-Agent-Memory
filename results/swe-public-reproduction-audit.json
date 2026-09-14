@@ -1,0 +1,109 @@
+{
+  "protocol": "topic3c-public-reproduction-audit-v1",
+  "experiments": [
+    {
+      "name": "swe-public-repro-v1",
+      "source": "MemoryCore/artifacts/topic3-c/swe-public-repro-v1/results.json",
+      "source_sha256": "9805cc9f0aee552299dbae7f474dff60d89d6e9e9551cfe4b7c700100b4d8e43",
+      "rows": [
+        {
+          "task_id": "astropy__astropy-13236",
+          "script_generation_valid": true,
+          "generated_patch_valid": true,
+          "base_exit": 1,
+          "initial_patch_exit": 1,
+          "base_stderr": "Traceback (most recent call last):\n  File \"/experiment/repro.py\", line 4, in <module>\n    from astropy.table.mixins.column import NdarrayMixin\nModuleNotFoundError: No module named 'astropy.table.mixins.column'\n",
+          "total_api_tokens": 13845
+        },
+        {
+          "task_id": "astropy__astropy-14096",
+          "script_generation_valid": true,
+          "generated_patch_valid": true,
+          "base_exit": 1,
+          "initial_patch_exit": 1,
+          "base_stderr": "Traceback (most recent call last):\n  File \"/experiment/repro.py\", line 11, in <module>\n    c.prop\n  File \"/testbed/astropy/coordinates/sky_coordinate.py\", line 898, in __getattr__\n    raise AttributeError(\nAttributeError: 'custom_coord' object has no attribute 'prop'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/experiment/repro.py\", line 13, in <module>\n    assert \"random_attr\" in str(e), f\"Expected error message to mention 'random_attr', got: {e}\"\nAssertionError: Expected error message to mention 'random_attr', got: 'custom_coord' object has no attribute 'prop'\n",
+          "total_api_tokens": 20108
+        },
+        {
+          "task_id": "astropy__astropy-14365",
+          "script_generation_valid": true,
+          "generated_patch_valid": true,
+          "base_exit": 1,
+          "initial_patch_exit": 1,
+          "base_stderr": "Traceback (most recent call last):\n  File \"/testbed/astropy/io/ascii/core.py\", line 336, in get_lines\n    table = fileobj.read()\nTypeError: read() should return bytes\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/testbed/astropy/io/ascii/core.py\", line 344, in get_lines\n    table[0]\nTypeError: '_io.StringIO' object is not subscriptable\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/experiment/repro.py\", line 8, in <module>\n    table = Table.read(io.StringIO(qdp_content), format='ascii.qdp')\n  File \"/testbed/astropy/table/connect.py\", line 62, in __call__\n    out = self.registry.read(cls, *args, **kwargs)\n  File \"/testbed/astropy/io/registry/core.py\", line 218, in read\n    data = reader(*args, **kwargs)\n  File \"/testbed/astropy/io/ascii/connect.py\", line 19, in io_read\n    return read(filename, **kwargs)\n  File \"/testbed/astropy/io/ascii/ui.py\", line 426, in read\n    dat = reader.read(table)\n  File \"/testbed/astropy/io/ascii/qdp.py\", line 631, in read\n    self.lines = self.inputter.get_lines(table, newline=\"\\n\")\n  File \"/testbed/astropy/io/ascii/core.py\", line 357, in get_lines\n    raise TypeError(\nTypeError: Input \"table\" must be a string (filename or data) or an iterable\n",
+          "total_api_tokens": 16401
+        },
+        {
+          "task_id": "astropy__astropy-14369",
+          "script_generation_valid": true,
+          "generated_patch_valid": false,
+          "base_exit": 1,
+          "initial_patch_exit": null,
+          "base_stderr": "Traceback (most recent call last):\n  File \"/testbed/astropy/io/ascii/core.py\", line 336, in get_lines\n    table = fileobj.read()\nTypeError: read() should return bytes\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/testbed/astropy/io/ascii/core.py\", line 344, in get_lines\n    table[0]\nTypeError: '_io.StringIO' object is not subscriptable\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/experiment/repro.py\", line 24, in <module>\n    dat = Table.read(io.StringIO(mrt_content), format='ascii.cds')\n  File \"/testbed/astropy/table/connect.py\", line 62, in __call__\n    out = self.registry.read(cls, *args, **kwargs)\n  File \"/testbed/astropy/io/registry/core.py\", line 218, in read\n    data = reader(*args, **kwargs)\n  File \"/testbed/astropy/io/ascii/connect.py\", line 19, in io_read\n    return read(filename, **kwargs)\n  File \"/testbed/astropy/io/ascii/ui.py\", line 426, in read\n    dat = reader.read(table)\n  File \"/testbed/astropy/io/ascii/cds.py\", line 357, in read\n    return super().read(table)\n  File \"/testbed/astropy/io/ascii/core.py\", line 1413, in read\n    self.lines = self.inputter.get_lines(table, newline=newline)\n  File \"/testbed/astropy/io/ascii/core.py\", line 357, in get_lines\n    raise TypeError(\nTypeError: Input \"table\" must be a string (filename or data) or an iterable\n",
+          "total_api_tokens": 48752
+        },
+        {
+          "task_id": "astropy__astropy-14995",
+          "script_generation_valid": true,
+          "generated_patch_valid": true,
+          "base_exit": 1,
+          "initial_patch_exit": 0,
+          "base_stderr": "Traceback (most recent call last):\n  File \"/experiment/repro.py\", line 20, in <module>\n    result = nref_mask.multiply(1., handle_mask=np.bitwise_or)\n  File \"/testbed/astropy/nddata/mixins/ndarithmetic.py\", line 618, in multiply\n    return self._prepare_then_do_arithmetic(\n  File \"/testbed/astropy/nddata/mixins/ndarithmetic.py\", line 731, in _prepare_then_do_arithmetic\n    result, init_kwds = operand._arithmetic(operation, operand2, **kwargs)\n  File \"/testbed/astropy/nddata/mixins/ndarithmetic.py\", line 335, in _arithmetic\n    kwargs[\"mask\"] = self._arithmetic_mask(\n  File \"/testbed/astropy/nddata/mixins/ndarithmetic.py\", line 527, in _arithmetic_mask\n    return handle_mask(self.mask, operand.mask, **kwds)\nTypeError: unsupported operand type(s) for |: 'int' and 'NoneType'\n",
+          "total_api_tokens": 15278
+        }
+      ]
+    },
+    {
+      "name": "swe-public-repro-repair-v1",
+      "source": "MemoryCore/artifacts/topic3-c/swe-public-repro-repair-v1/results.json",
+      "source_sha256": "59512d1af9ab83b2bf27c0c35a64fe29b88c1b57c673cb87833ddbc4f73c3c39",
+      "rows": [
+        {
+          "task_id": "astropy__astropy-13236",
+          "script_generation_valid": true,
+          "generated_patch_valid": true,
+          "base_exit": 1,
+          "initial_patch_exit": 1,
+          "base_stderr": "Traceback (most recent call last):\n  File \"/experiment/repro.py\", line 4, in <module>\n    from astropy.table.mixins import NdarrayMixin\nImportError: cannot import name 'NdarrayMixin' from 'astropy.table.mixins' (/testbed/astropy/table/mixins/__init__.py)\n",
+          "total_api_tokens": 20798
+        },
+        {
+          "task_id": "astropy__astropy-14096",
+          "script_generation_valid": true,
+          "generated_patch_valid": true,
+          "base_exit": 1,
+          "initial_patch_exit": 1,
+          "base_stderr": "Traceback (most recent call last):\n  File \"/experiment/repro.py\", line 11, in <module>\n    c.prop\n  File \"/testbed/astropy/coordinates/sky_coordinate.py\", line 898, in __getattr__\n    raise AttributeError(\nAttributeError: 'custom_coord' object has no attribute 'prop'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/experiment/repro.py\", line 13, in <module>\n    assert \"random_attr\" in str(e), f\"Expected error message to mention 'random_attr', got: {e}\"\nAssertionError: Expected error message to mention 'random_attr', got: 'custom_coord' object has no attribute 'prop'\n",
+          "total_api_tokens": 20105
+        },
+        {
+          "task_id": "astropy__astropy-14365",
+          "script_generation_valid": true,
+          "generated_patch_valid": true,
+          "base_exit": 1,
+          "initial_patch_exit": 1,
+          "base_stderr": "Traceback (most recent call last):\n  File \"/testbed/astropy/io/ascii/core.py\", line 336, in get_lines\n    table = fileobj.read()\nTypeError: read() should return bytes\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/testbed/astropy/io/ascii/core.py\", line 344, in get_lines\n    table[0]\nTypeError: '_io.StringIO' object is not subscriptable\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/experiment/repro.py\", line 8, in <module>\n    table = Table.read(io.StringIO(qdp_content), format='ascii.qdp')\n  File \"/testbed/astropy/table/connect.py\", line 62, in __call__\n    out = self.registry.read(cls, *args, **kwargs)\n  File \"/testbed/astropy/io/registry/core.py\", line 218, in read\n    data = reader(*args, **kwargs)\n  File \"/testbed/astropy/io/ascii/connect.py\", line 19, in io_read\n    return read(filename, **kwargs)\n  File \"/testbed/astropy/io/ascii/ui.py\", line 426, in read\n    dat = reader.read(table)\n  File \"/testbed/astropy/io/ascii/qdp.py\", line 631, in read\n    self.lines = self.inputter.get_lines(table, newline=\"\\n\")\n  File \"/testbed/astropy/io/ascii/core.py\", line 357, in get_lines\n    raise TypeError(\nTypeError: Input \"table\" must be a string (filename or data) or an iterable\n",
+          "total_api_tokens": 25105
+        },
+        {
+          "task_id": "astropy__astropy-14369",
+          "script_generation_valid": true,
+          "generated_patch_valid": false,
+          "base_exit": 0,
+          "initial_patch_exit": null,
+          "base_stderr": "",
+          "total_api_tokens": 58630
+        },
+        {
+          "task_id": "astropy__astropy-14995",
+          "script_generation_valid": true,
+          "generated_patch_valid": true,
+          "base_exit": 1,
+          "initial_patch_exit": 0,
+          "base_stderr": "Traceback (most recent call last):\n  File \"/experiment/repro.py\", line 20, in <module>\n    result = nref_mask.multiply(1., handle_mask=np.bitwise_or)\n  File \"/testbed/astropy/nddata/mixins/ndarithmetic.py\", line 618, in multiply\n    return self._prepare_then_do_arithmetic(\n  File \"/testbed/astropy/nddata/mixins/ndarithmetic.py\", line 731, in _prepare_then_do_arithmetic\n    result, init_kwds = operand._arithmetic(operation, operand2, **kwargs)\n  File \"/testbed/astropy/nddata/mixins/ndarithmetic.py\", line 335, in _arithmetic\n    kwargs[\"mask\"] = self._arithmetic_mask(\n  File \"/testbed/astropy/nddata/mixins/ndarithmetic.py\", line 527, in _arithmetic_mask\n    return handle_mask(self.mask, operand.mask, **kwds)\nTypeError: unsupported operand type(s) for |: 'int' and 'NoneType'\n",
+          "total_api_tokens": 23372
+        }
+      ]
+    }
+  ]
+}

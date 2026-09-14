@@ -1,4 +1,5 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import type { AdaptiveDecision, AdaptiveFeatures, AdaptiveRecallPolicy } from "./adaptive-policy.js";
 
@@ -86,7 +87,7 @@ function safeConfig(input?: Partial<PromotionGateConfig>): PromotionGateConfig {
 }
 
 function gateFile(root: string, scope: string): string {
-  const encoded = Buffer.from(scope, "utf8").toString("base64url").slice(0, 160);
+  const encoded = createHash("sha256").update(scope).digest("hex");
   return path.join(root, "adaptive-policy", `${encoded}.promotion.json`);
 }
 
@@ -165,7 +166,10 @@ export class AdaptivePromotionGate {
 
     let stage: PromotionStage;
     let reason: string;
-    if (state.mode === "promoted") {
+    if (state.mode === "promoted" && !eligible) {
+      stage = "demoted";
+      reason = "current observations no longer satisfy promotion gates";
+    } else if (state.mode === "promoted") {
       stage = "promoted";
       reason = state.reason;
     } else if (state.mode === "demoted") {
@@ -207,6 +211,9 @@ export class AdaptivePromotionGate {
     let snapshot: PromotionSnapshot | undefined;
     const run = async () => {
       const state = await this.state(observation.scope);
+      if (state.observations.some((row) => row.taskId === observation.taskId)) {
+        throw new Error(`Duplicate promotion task: ${observation.taskId}`);
+      }
       state.observations.push({ ...observation, timestamp: observation.timestamp ?? Date.now() });
       state.observations = state.observations.slice(-this.config.windowSize);
       state.updatedAt = Date.now();
@@ -215,6 +222,10 @@ export class AdaptivePromotionGate {
         state.reason = `hard failure on ${observation.taskId}`;
       }
       snapshot = this.snapshotFor(observation.scope, state);
+      if (state.mode === "promoted" && snapshot.stage === "demoted") {
+        state.mode = "demoted";
+        state.reason = snapshot.reason;
+      }
       if (this.config.autoPromote && snapshot.stage === "eligible") {
         state.mode = "promoted";
         state.reason = "automatic promotion after all gates passed";
@@ -273,7 +284,7 @@ export async function decideWithPromotionGate(
 ): Promise<PromotionGatedDecision> {
   const [candidateDecision, promotion] = await Promise.all([policy.decide(scope, features), gate.status(scope)]);
   const activeDecision = promotion.canActivate
-    ? { ...candidateDecision, shadow: false }
+    ? candidateDecision
     : { ...candidateDecision, action: "top10" as const, effectiveK: 10, shadow: true };
   return { activeDecision, candidateDecision, promotion };
 }

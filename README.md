@@ -54,11 +54,11 @@ MemoryCore Top-10 基线
 | 指标 | 差值 |
 |---|---:|
 | Token F1 | `+0.02781` |
-| Evidence recall | `+0.03952` |
-| 平均输入 token | `-63.57` |
+| 答案词元召回率 | `+0.03952` |
+| 平均记忆上下文 token | `-63.57` |
 | Token 节省率 | `23.28%` |
 
-query-level 与 dialog-cluster bootstrap 区间均不跨 0；但这些对话在方法开发中已被观察，不能作为独立泛化证据。最后再固定 3 个对话选参数、2 个对话验证：KNN24 在 296 条验证 query 上节省 19.35% 上下文，但 F1/recall 分别为 `-0.00520/-0.03027`，所以没有晋升，Top-10 继续作为默认安全策略。
+query-level 与 dialog-cluster bootstrap 区间均不跨 0；但这些对话在方法开发中已被观察，不能作为独立泛化证据。最后再固定 3 个对话选参数、2 个对话验证：KNN24 在 296 条验证 query 上节省 19.35% 上下文，但 F1/recall 分别为 `-0.00520/-0.03027`，所以没有晋升，开启自适应后的默认仍为 Top-10；关闭时保留基座静态配置。
 
 独立 LongMemEval 的 30 条缓存答案上，`ridge-gated-0.01` 只对 4 条 query 使用 Top-5，F1/recall 均不下降，每题节省 22.9 token；该小样本结论不直接迁移到 LoCoMo。
 
@@ -90,6 +90,7 @@ MemoryCore/
     swe-agent-v2.py             # 实验性 SWE search/read/test/edit 闭环
     test_swe_agent_v2.py
 docs/topic3c/
+  FINAL_REPORT.md
   IMPLEMENTATION.md
   EXPERIMENT_HISTORY.md
   RESULTS.md
@@ -104,7 +105,7 @@ results/
 
 其余目录来自上游 `v2.0.0-beta.1`，便于审查本方案相对基线的增量。
 
-最终实验报告见 [自适应记忆编程优化：最终实验报告](output/pdf/topic3c-adaptive-memory-final-report-cn.pdf)。它已替代口径过时的 initial report。
+最终上交报告见 [方案介绍与测试结论报告](docs/topic3c/FINAL_REPORT.md)，排版版见 [最终实验报告 PDF](output/pdf/topic3c-adaptive-memory-final-report-cn.pdf)。二者已替代口径过时的 initial report。
 
 ## 快速验证
 
@@ -117,10 +118,10 @@ npm run smoke:topic3c
 npm run eval:topic3c
 ```
 
-SWE solver 的纯单元测试需要 Python 3.9+ 和 pytest：
+SWE solver 的纯单元测试需要 Python 3.9+（使用标准库 unittest，无需 pytest）：
 
 ```bash
-python -m pytest -q scripts/topic3-c/test_swe_agent_v2.py
+python scripts/topic3-c/test_swe_agent_v2.py
 python -m py_compile scripts/topic3-c/swe-agent-v2.py
 ```
 
